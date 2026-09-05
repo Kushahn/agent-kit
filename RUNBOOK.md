@@ -16,6 +16,9 @@ QR code. You may **not leave the venue** once checked in (§3.7, §6.7).
 - [ ] `uv sync` — confirm cached, no download needed
 - [ ] `uv run pytest -q` — 6 green
 - [ ] `vercel whoami` — still logged in
+- [ ] `git config --global user.name` / `user.email` set — the organiser's repo will be
+      fresh, and an unset identity blocks your first commit at hour zero (§8.6 also uses
+      authorship to verify each member's contribution)
 - [ ] Phone hotspot on standby, own API key in your pocket
 
 ---
@@ -68,7 +71,9 @@ exactly the thing that gets forgotten.
 
 | Symptom | Do this |
 |---|---|
-| Deploy fails | You still have the last good deploy. Fix forward, do not roll back and panic. Fallback target: Hugging Face Spaces. |
+| Deploy fails | You still have the last good deploy. Fix forward, do not roll back and panic. Fallback: Hugging Face Spaces. |
+| Every URL 404s with `{"detail":"Not Found"}` | A rewrite in `vercel.json` is flattening the path. Remove it — Vercel routes to `app/main.py` natively. Verified 5 Sep. |
+| Deployed run returns a gateway timeout | 60s function cap. The loop self-stops at 50s; if it still bites, lower `max_steps` or switch to a faster model. |
 | Venue Wi-Fi dies | LAN adapter, then phone hotspot. Deps are already cached. |
 | API key not provisioned | Use your own key. Never sit blocked on someone else's provisioning. |
 | Claude hits its usage limit | It falls back to Sonnet automatically. If that runs out, hand the wheel to Codex — `AGENTS.md` is written so either can drive. |

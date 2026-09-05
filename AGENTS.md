@@ -19,7 +19,7 @@ and a visible chain of tool calls is the evidence. An AI judge reads it first.
 | `app/demo.py` | **Gut this on the day.** The bundled case the demo button runs. |
 | `app/main.py` | FastAPI routes. Rarely changes. |
 | `app/ui.py` | The page, inlined as a string constant. |
-| `api/index.py` | Vercel entrypoint shim. Do not move. |
+| `vercel.json` | Function config only. **Never add a catch-all rewrite** — see Deploy. |
 | `tests/test_smoke.py` | Runs the whole loop with a fake client — no API key needed. |
 
 ## Division of labour
@@ -45,6 +45,37 @@ Measured: **45s vs 2m36s** against the default `ultra` profile on a real coding 
 
 Keep `.codex/` committed. Codex use is mandatory (§8.6 lets experts verify it) and the
 session logs are the evidence.
+
+## Deploy — read before touching `vercel.json`
+
+Verified working on 5 September. Two things were learned the expensive way, so they are
+written down rather than rediscovered at hour four:
+
+1. **Vercel detects the FastAPI entrypoint (`app/main.py`) natively. Do not add a rewrite.**
+   A catch-all `{"source": "/(.*)", "destination": "/api/index"}` looks right and is wrong:
+   it rewrites the *path itself*, so every request arrives at the app as `/api/index` and
+   nothing routes. The app returns FastAPI's own 404 for every URL, which reads like a
+   broken app rather than a config bug. `vercel.json` should carry function config only.
+
+2. **`maxDuration` caps at 60s** on the free tier. An 8-step loop against a reasoning model
+   can exceed that, and a judge would see a gateway timeout instead of a trail. The loop
+   therefore stops itself at `DEADLINE_SECONDS = 50` and returns the partial trail with a
+   visible "deadline" step. If runs get cut short on the day, lower `max_steps` or use a
+   faster model — do not raise the deadline above ~55.
+
+```bash
+vercel deploy --temporary --yes   # anonymous, expires in ~1h; good for testing the pipeline
+vercel login && vercel --prod     # the real thing
+```
+
+Verify a deploy in three calls, always:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}
+" "$URL/"          # 200, HTML
+curl -s "$URL/api/health"                                   # api_key_configured must be true
+curl -s -X POST "$URL/api/demo" | head -c 200               # the judge's path
+```
 
 ## Non-negotiable rules on the day
 

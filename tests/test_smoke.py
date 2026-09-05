@@ -155,5 +155,16 @@ def test_model_failure_is_recorded_not_raised() -> None:
     assert "api is down" in run.steps[0].detail
 
 
+def test_deadline_returns_partial_trail() -> None:
+    """Out of wall-clock time, the run returns what it has instead of being killed."""
+    client = FakeClient([FakeResponse([FakeCall(name="summarise_dataset", arguments="{}")])])
+    registry, _flags = build_registry(RECORDS)
+
+    run = run_agent("slow work", registry=registry, client=client, model="fake", deadline_s=0.0)
+
+    assert run.ok is False
+    assert run.steps[-1].name == "deadline"
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))

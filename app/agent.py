@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODEL = "gpt-5.6"
 MAX_STEPS = 8
 TOOL_OUTPUT_LIMIT = 4000
+# Vercel caps a function at 60s on Hobby. Stop at 50s and return the partial trail:
+# a visible "ran out of time" step is far better than a gateway timeout showing a judge nothing.
+DEADLINE_SECONDS = 50.0
 
 
 class SupportsResponses(Protocol):
@@ -94,6 +97,7 @@ def run_agent(
     model: str = DEFAULT_MODEL,
     max_steps: int = MAX_STEPS,
     instructions: str | None = None,
+    deadline_s: float = DEADLINE_SECONDS,
 ) -> AgentRun:
     """Run the tool-calling loop until the model answers or the step budget runs out.
 
@@ -104,6 +108,8 @@ def run_agent(
         model: Model id. Kept a parameter so it can be swapped at the event.
         max_steps: Hard cap on model turns, so a loop cannot burn the token budget.
         instructions: Optional system-level steer passed to the Responses API.
+        deadline_s: Wall-clock budget. On expiry the run returns what it has rather
+            than being killed mid-flight by the platform.
 
     Returns:
         An AgentRun holding the final answer and every step taken.
@@ -116,8 +122,13 @@ def run_agent(
     run = AgentRun(task=task, model=model)
     schemas = [tool.schema() for tool in registry.values()]
     conversation: list[Any] = [{"role": "user", "content": task}]
+    deadline = time.monotonic() + deadline_s
 
     for n in range(1, max_steps + 1):
+        if time.monotonic() >= deadline:
+            run.ok = False
+            run.steps.append(Step(n, "error", "deadline", f"stopped after {deadline_s:.0f}s"))
+            return run
         started = time.monotonic()
         try:
             response = client.responses.create(
