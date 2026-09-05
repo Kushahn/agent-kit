@@ -71,8 +71,7 @@ vercel login && vercel --prod     # the real thing
 Verify a deploy in three calls, always:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}
-" "$URL/"          # 200, HTML
+curl -s -o /dev/null -w "%{http_code}" "$URL/"           # 200, HTML
 curl -s "$URL/api/health"                                   # api_key_configured must be true
 curl -s -X POST "$URL/api/demo" | head -c 200               # the judge's path
 ```
