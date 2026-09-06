@@ -45,7 +45,7 @@ input at all.
 ```bash
 uv sync
 cp .env.example .env          # add OPENAI_API_KEY
-uv run pytest -q              # 6 tests, no API key needed
+uv run pytest -q              # 7 tests, no API key needed
 uv run uvicorn app.main:app --reload
 # open http://127.0.0.1:8000 and press "Run the demo case"
 ```
