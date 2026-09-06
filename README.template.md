@@ -92,7 +92,8 @@ the use concrete.
 Required by Положение §6.4.
 
 - **Pre-existing code:** built on `agent-kit`, our own public boilerplate created before the
-  hackathon (<repo URL>, commit history predates 23 September). It contains only plumbing —
+  hackathon (https://github.com/Kushahn/agent-kit, public since 6 September — commit
+  history predates 23 September and is externally timestamped). It contains only plumbing —
   the agent loop, FastAPI wiring, the page, and deploy config. All case-specific work
   (tools, prompts, data handling, UI copy) was written during the contest.
 - **Libraries:** FastAPI, Pydantic, the OpenAI Python SDK, uvicorn.
