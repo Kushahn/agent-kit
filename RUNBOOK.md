@@ -85,7 +85,8 @@ exactly the thing that gets forgotten.
 | Laptop RAM pressure | Close browser tabs first — the browser is the biggest consumer, not the IDE. Then Cursor. |
 | Agent loops without answering | `max_steps` already caps it. Tighten the tool descriptions; vague descriptions cause thrashing. |
 | `rsync: command not found` | Not in Git Bash here. Import with `git -C <src> archive HEAD \| tar -x -C .` — it also exports exactly the tracked files. |
-| `rm -rf` refused by a hook | The security floor blocks it by design and cannot be switched off. Avoid creating the files, or use PowerShell `Remove-Item`. The guard matches the literal text, so it also fires on documentation that merely mentions the command. |
+| `rm -rf` refused by a hook | Revised 6 Sept: relative paths inside the tree are now allowed (`.venv`, `./build`). Absolute paths, `~`, `..`, `*` and unresolved variables still block by design. Use a relative path, or run it yourself. |
+| Write blocked for a hidden character | Pasted text (likely from the organiser's portal) carries a soft hyphen, BOM or bidi mark. The message names the codepoint and index. Strip with `re.sub(r'[­​-‏  ‪-‮﻿]', '', text)` and rewrite. |
 | `src refspec main does not match any` | You are on `master`. Push `HEAD`, not a branch name. |
 | Agent ignores most of a long list | A list tool overflowed `TOOL_OUTPUT_LIMIT` and arrived as broken JSON. Paginate it — see `AGENTS.md`. |
 
