@@ -21,6 +21,10 @@ QR code. You may **not leave the venue** once checked in (§3.7, §6.7).
       authorship to verify each member's contribution)
 - [ ] Phone hotspot on standby, own API key in your pocket
 
+**Rehearsed 6 Sept.** Import + `uv sync` + tests green took **14s**; through the
+disclosure commit, **under 2 minutes**. The 40 minutes budgeted for 0:00-0:40 is
+thinking time, not typing — spend it on the case, not on setup.
+
 ---
 
 ## The schedule
@@ -58,8 +62,8 @@ Healthcare · Construction · Fintech · Education · Agriculture · Creative in
 ```bash
 git add -A
 git commit -m "feat: <what actually changed this hour>"
-git push
-vercel --prod
+git push -u origin HEAD     # HEAD, not main: init.defaultBranch is `master` here,
+vercel --prod               # so a fresh clone sits on master and `push origin main` fails
 ```
 
 Then one line in `PROGRESS.md`. Set a phone alarm for every hour — under pressure this is
@@ -80,6 +84,10 @@ exactly the thing that gets forgotten.
 | Codex is slow | You are on `-p hackathon` (effort `high`), right? Confirm the header says `reasoning effort: high`, not `ultra`. |
 | Laptop RAM pressure | Close browser tabs first — the browser is the biggest consumer, not the IDE. Then Cursor. |
 | Agent loops without answering | `max_steps` already caps it. Tighten the tool descriptions; vague descriptions cause thrashing. |
+| `rsync: command not found` | Not in Git Bash here. Import with `git -C <src> archive HEAD \| tar -x -C .` — it also exports exactly the tracked files. |
+| `rm -rf` refused by a hook | The security floor blocks it by design and cannot be switched off. Avoid creating the files, or use PowerShell `Remove-Item`. The guard matches the literal text, so it also fires on documentation that merely mentions the command. |
+| `src refspec main does not match any` | You are on `master`. Push `HEAD`, not a branch name. |
+| Agent ignores most of a long list | A list tool overflowed `TOOL_OUTPUT_LIMIT` and arrived as broken JSON. Paginate it — see `AGENTS.md`. |
 
 ---
 

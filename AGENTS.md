@@ -20,7 +20,8 @@ and a visible chain of tool calls is the evidence. An AI judge reads it first.
 | `app/main.py` | FastAPI routes. Rarely changes. |
 | `app/ui.py` | The page, inlined as a string constant. |
 | `vercel.json` | Function config only. **Never add a catch-all rewrite** — see Deploy. |
-| `tests/test_smoke.py` | Runs the whole loop with a fake client — no API key needed. |
+| `tests/test_smoke.py` | Loop tests on a **throwaway registry** — they survive gutting `tools.py`. |
+| `tests/test_case.py` | Write case-specific tool tests here on the day. |
 
 ## Division of labour
 
@@ -35,9 +36,17 @@ Never point both at the same file at the same time.
 Delegate like this:
 
 ```bash
-codex exec -p hackathon -s workspace-write --approve-for-me -C . -o .codex/last.md "<task>"
-codex review          # before submitting
+# Delegate. NOTE: --approve-for-me already implies the workspace-write sandbox and
+# CONFLICTS with -s; passing both fails instantly with an argument error.
+codex exec -p hackathon --approve-for-me -C . -o .codex/last.md "<task>"
+
+# Review. -p must come BEFORE the subcommand, and a range is required.
+codex exec -p hackathon review --base <commit>      # or --uncommitted
 ```
+
+Run delegations in the foreground, or check the output file afterwards. A backgrounded
+`codex exec` that fails on its arguments exits in under a second and the error is easy
+to miss — exactly how the broken command above survived until the dress rehearsal.
 
 `-p hackathon` loads `~/.codex/hackathon.config.toml`: reasoning effort `high`, plugins off.
 Measured: **45s vs 2m36s** against the default `ultra` profile on a real coding task. Use
@@ -103,6 +112,12 @@ Tool(
 
 Registry is built per request and closed over that request's data — no module globals,
 so nothing leaks between concurrent serverless invocations.
+
+**Any tool that returns a list must paginate.** `agent._invoke` clips every tool result at
+`TOOL_OUTPUT_LIMIT` (4000 chars), and the clip lands mid-string, so an oversized result
+reaches the model as *unparseable JSON* — no error, and no way for it to ask for the rest.
+Give list tools `offset`/`limit`, return a `next_offset`, cap the page server-side, and say
+so in the description. Measured in rehearsal: ~20 ordinary records already overflowed.
 
 ## Commands
 

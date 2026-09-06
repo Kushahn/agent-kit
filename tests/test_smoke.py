@@ -1,7 +1,10 @@
-"""The one check that has to pass before you build on this.
+"""Loop tests. These must survive gutting `app/tools.py` for a new case.
 
-Runs the whole loop with a fake client, so it needs no API key and no network -
-which matters, because at the venue you want this green before you wire a key.
+Deliberately built on a local throwaway registry rather than the real one: the loop's
+contract (dispatch, feed results back, budgets, error handling) is independent of whichever
+tools a given case needs. Case-specific tools get their own tests in test_case.py.
+
+Runs with a fake client, so no API key and no network.
 """
 
 from __future__ import annotations
@@ -12,12 +15,7 @@ from typing import Any
 import pytest
 
 from app.agent import run_agent
-from app.tools import build_registry
-
-RECORDS = [
-    {"id": "R-1", "name": "alpha", "amount": 10},
-    {"id": "R-2", "name": "beta", "amount": 20},
-]
+from app.tools import Tool
 
 
 @dataclass
@@ -57,42 +55,48 @@ class FakeClient:
         self.responses = FakeResponses(script)
 
 
+def toy_registry() -> tuple[dict[str, Tool], list[Any]]:
+    """A two-tool registry owned by this test file, so cases cannot break these tests."""
+    seen: list[Any] = []
+
+    def echo(value: str) -> dict[str, Any]:
+        seen.append(value)
+        return {"echoed": value, "count": len(seen)}
+
+    tools = {
+        "echo": Tool(
+            name="echo",
+            description="Echo a value back.",
+            parameters={
+                "type": "object",
+                "properties": {"value": {"type": "string"}},
+                "required": ["value"],
+            },
+            fn=echo,
+        )
+    }
+    return tools, seen
+
+
 def test_loop_calls_tool_then_answers() -> None:
     """A tool call is executed, fed back, and the final answer is captured."""
     client = FakeClient(
         [
-            FakeResponse([FakeCall(name="summarise_dataset", arguments="{}")]),
-            FakeResponse([], text="There are 2 records."),
+            FakeResponse([FakeCall(name="echo", arguments='{"value":"hello"}')]),
+            FakeResponse([], text="It echoed hello."),
         ]
     )
-    registry, _flags = build_registry(RECORDS)
+    registry, seen = toy_registry()
 
-    run = run_agent("describe the data", registry=registry, client=client, model="fake")
+    run = run_agent("say hello", registry=registry, client=client, model="fake")
 
     assert run.ok is True
-    assert run.answer == "There are 2 records."
-    kinds = [step.kind for step in run.steps]
-    assert kinds == ["model", "tool", "model", "final"]
-    # The tool actually ran against the injected records, not a stub.
-    assert "row_count" in run.steps[1].detail and "2" in run.steps[1].detail
-    # The tool result was fed back to the model as a function_call_output.
+    assert run.answer == "It echoed hello."
+    assert [step.kind for step in run.steps] == ["model", "tool", "model", "final"]
+    assert seen == ["hello"], "the tool body actually ran"
+    # The result was fed back as a function_call_output on the next turn.
     second_input = client.responses.calls[1]["input"]
     assert any(isinstance(item, dict) and item.get("type") == "function_call_output" for item in second_input)
-
-
-def test_flags_are_collected() -> None:
-    """flag_record decisions surface through the shared flags list."""
-    client = FakeClient(
-        [
-            FakeResponse([FakeCall(name="flag_record", arguments='{"record_id":"R-2","reason":"outlier"}')]),
-            FakeResponse([], text="Flagged one record."),
-        ]
-    )
-    registry, flags = build_registry(RECORDS)
-
-    run_agent("find outliers", registry=registry, client=client, model="fake")
-
-    assert flags == [{"record_id": "R-2", "reason": "outlier", "severity": "medium"}]
 
 
 def test_unknown_tool_does_not_raise() -> None:
@@ -103,7 +107,7 @@ def test_unknown_tool_does_not_raise() -> None:
             FakeResponse([], text="Recovered."),
         ]
     )
-    registry, _flags = build_registry(RECORDS)
+    registry, _ = toy_registry()
 
     run = run_agent("do a thing", registry=registry, client=client, model="fake")
 
@@ -115,26 +119,56 @@ def test_bad_arguments_do_not_raise() -> None:
     """Malformed tool arguments are reported, not raised."""
     client = FakeClient(
         [
-            FakeResponse([FakeCall(name="query_records", arguments="{not json")]),
+            FakeResponse([FakeCall(name="echo", arguments="{not json")]),
             FakeResponse([], text="Recovered."),
         ]
     )
-    registry, _flags = build_registry(RECORDS)
+    registry, _ = toy_registry()
 
-    run = run_agent("query", registry=registry, client=client, model="fake")
+    run = run_agent("echo", registry=registry, client=client, model="fake")
 
     assert "not valid JSON" in run.steps[1].detail
 
 
+def test_tool_exception_is_reported_not_raised() -> None:
+    """A tool that throws is reported back to the model instead of ending the run."""
+
+    def explode() -> dict[str, Any]:
+        raise ValueError("tool blew up")
+
+    registry = {
+        "boom": Tool("boom", "Explodes.", {"type": "object", "properties": {}, "required": []}, explode)
+    }
+    client = FakeClient(
+        [FakeResponse([FakeCall(name="boom", arguments="{}")]), FakeResponse([], text="Recovered.")]
+    )
+
+    run = run_agent("break it", registry=registry, client=client, model="fake")
+
+    assert run.ok is True
+    assert "ValueError: tool blew up" in run.steps[1].detail
+
+
 def test_step_budget_is_enforced() -> None:
     """A model that never stops calling tools is cut off, not left to burn tokens."""
-    client = FakeClient([FakeResponse([FakeCall(name="summarise_dataset", arguments="{}")])])
-    registry, _flags = build_registry(RECORDS)
+    client = FakeClient([FakeResponse([FakeCall(name="echo", arguments='{"value":"x"}')])])
+    registry, _ = toy_registry()
 
     run = run_agent("loop forever", registry=registry, client=client, model="fake", max_steps=3)
 
     assert run.ok is False
     assert run.steps[-1].name == "max_steps"
+
+
+def test_deadline_returns_partial_trail() -> None:
+    """Out of wall-clock time, the run returns what it has instead of being killed."""
+    client = FakeClient([FakeResponse([FakeCall(name="echo", arguments='{"value":"x"}')])])
+    registry, _ = toy_registry()
+
+    run = run_agent("slow work", registry=registry, client=client, model="fake", deadline_s=0.0)
+
+    assert run.ok is False
+    assert run.steps[-1].name == "deadline"
 
 
 def test_model_failure_is_recorded_not_raised() -> None:
@@ -147,23 +181,12 @@ def test_model_failure_is_recorded_not_raised() -> None:
     class Client:
         responses = Exploding()
 
-    registry, _flags = build_registry(RECORDS)
+    registry, _ = toy_registry()
 
     run = run_agent("anything", registry=registry, client=Client(), model="fake")
 
     assert run.ok is False
     assert "api is down" in run.steps[0].detail
-
-
-def test_deadline_returns_partial_trail() -> None:
-    """Out of wall-clock time, the run returns what it has instead of being killed."""
-    client = FakeClient([FakeResponse([FakeCall(name="summarise_dataset", arguments="{}")])])
-    registry, _flags = build_registry(RECORDS)
-
-    run = run_agent("slow work", registry=registry, client=client, model="fake", deadline_s=0.0)
-
-    assert run.ok is False
-    assert run.steps[-1].name == "deadline"
 
 
 if __name__ == "__main__":
