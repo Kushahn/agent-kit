@@ -1,0 +1,2 @@
+# Three people append to the hourly log at once; union keeps every line instead of conflicting.
+PROGRESS.md merge=union
