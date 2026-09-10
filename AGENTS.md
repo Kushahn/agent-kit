@@ -150,6 +150,26 @@ reaches the model as *unparseable JSON* — no error, and no way for it to ask f
 Give list tools `offset`/`limit`, return a `next_offset`, cap the page server-side, and say
 so in the description. Measured in rehearsal: ~20 ordinary records already overflowed.
 
+## Real data: data.egov.kz
+
+Real government data scores better than invented data on value and applicability, and the
+case may not ship its own. Verified 10 Sept:
+
+- **No API key needed for a snapshot.** The API (`/api/v4/...`) returns 403 without a key,
+  but each dataset page's export works without one:
+  `https://data.egov.kz/datasets/exportjson?index=<dataset>&version=v1&from=0&count=50`
+  (`exportexcel` for a spreadsheet). The dataset id is the `index=` part of its page URL.
+- **Fetch it yourself** — browser or `curl` — and hand the file to Codex to convert. Codex's
+  sandbox normally has no network.
+- **Snapshot into `app/demo.py`; never call the portal from the app.** It is slow and flaky
+  (the first request on 10 Sept timed out at 20s), and judges test 24–28 Sept.
+- **Check the update date and clean the text.** The sample pulled on 10 Sept was from 2016,
+  and Kazakh letters can arrive mis-encoded (`ДОСТЫЌ` for `ДОСТЫҚ`).
+- **Label planted records.** Real data has no known answers, so the demo still needs a few
+  planted cases — mark them (`"synthetic": true`) and say so in the README. §8.6 lets
+  experts check the reliability of claimed results.
+- **Disclose it** in README §7: dataset name, URL, date fetched (§6.4).
+
 ## Commands
 
 ```bash
