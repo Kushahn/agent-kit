@@ -50,8 +50,11 @@ Run delegations in the foreground, or check the output file afterwards. A backgr
 to miss — exactly how the broken command above survived until the dress rehearsal.
 
 `-p hackathon` loads `~/.codex/hackathon.config.toml`: reasoning effort `high`, plugins off.
-**Every laptop needs that file**, or the command fails before doing anything — the two-line
-version is in RUNBOOK's pre-event checklist.
+**Every laptop needs that file**, or the command fails before doing anything. Two lines are
+enough (tested 10 Sept: 13 s round trip); if Codex rejects the model, delete the first:
+
+    model = "gpt-5.6-terra"
+    model_reasoning_effort = "high"
 Measured: **45s vs 2m36s** against the default `ultra` profile on a real coding task. Use
 `-c model_reasoning_effort="ultra"` for a single genuinely hard problem, not as the default.
 
