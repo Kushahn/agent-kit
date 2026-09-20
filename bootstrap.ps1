@@ -46,6 +46,10 @@ $profileBody = @"
 model = "gpt-5.6-terra"
 model_reasoning_effort = "high"
 
+# Explicit, not inherited: the hour-zero research pass leans on Codex web search, and
+# leaving it to the base config means one laptop quietly has no search on the day.
+web_search = "live"
+
 [plugins."browser@openai-bundled"]
 enabled = false
 [plugins."computer-use@openai-bundled"]
