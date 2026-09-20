@@ -23,6 +23,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 logger = logging.getLogger(__name__)
 
 MODEL = os.environ.get("MODEL", DEFAULT_MODEL)
+# "responses" (OpenAI) or "chat" (NVIDIA NIM and anything else OpenAI-compatible).
+# Switching provider is this variable plus OPENAI_BASE_URL and OPENAI_API_KEY - no redeploy
+# of code, no edit to the loop. See AGENTS.md, "If it is the OpenAI side that dies".
+LLM_PROTOCOL = os.environ.get("LLM_PROTOCOL", "responses").lower()
 
 app = FastAPI(title="Agent Kit", docs_url="/api/docs")
 
@@ -32,6 +36,15 @@ class RunRequest(BaseModel):
 
     task: str = Field(min_length=1, max_length=8000)
     records: list[dict[str, Any]] | None = Field(default=None, max_length=500)
+
+
+def _build_client() -> Any | None:
+    """Return a client for the configured protocol, or None to let the loop build one."""
+    if LLM_PROTOCOL == "chat":
+        from app.chat_compat import ChatCompletionsClient
+
+        return ChatCompletionsClient()
+    return None
 
 
 def _missing_key() -> JSONResponse | None:
@@ -47,7 +60,7 @@ def _missing_key() -> JSONResponse | None:
 def _execute(task: str, records: list[dict[str, Any]], instructions: str | None) -> dict[str, Any]:
     """Run the agent over records and fold the flagged decisions into the result."""
     registry, flags = build_registry(records)
-    run = run_agent(task, registry=registry, model=MODEL, instructions=instructions)
+    run = run_agent(task, registry=registry, client=_build_client(), model=MODEL, instructions=instructions)
     payload = run.to_dict()
     payload["flags"] = flags
     return payload
@@ -66,6 +79,8 @@ def health() -> dict[str, Any]:
         "ok": True,
         "model": MODEL,
         "api_key_configured": bool(os.environ.get("OPENAI_API_KEY")),
+        "protocol": LLM_PROTOCOL,
+        "base_url": os.environ.get("OPENAI_BASE_URL", "openai-default"),
         "demo_records": len(demo.RECORDS),
     }
 
