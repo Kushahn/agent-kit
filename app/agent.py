@@ -23,6 +23,13 @@ TOOL_OUTPUT_LIMIT = 4000
 # Vercel caps a function at 60s on Hobby. Stop at 50s and return the partial trail:
 # a visible "ran out of time" step is far better than a gateway timeout showing a judge nothing.
 DEADLINE_SECONDS = 50.0
+# USD per 1M tokens (input, output). Unknown models cost 0.0 rather than a wrong number:
+# a judge reading "$0.00" asks a question, a judge reading a fabricated figure is misled.
+# ponytail: flat dict, not a pricing service. Update the two numbers if the model changes.
+PRICES: dict[str, tuple[float, float]] = {
+    "gpt-5.6": (1.25, 10.00),
+    "gpt-5.6-mini": (0.25, 2.00),
+}
 
 
 class SupportsResponses(Protocol):
@@ -40,6 +47,8 @@ class Step:
     name: str = ""
     detail: str = ""
     ms: int = 0
+    tokens_in: int = 0
+    tokens_out: int = 0
 
 
 @dataclass
@@ -51,15 +60,50 @@ class AgentRun:
     answer: str = ""
     ok: bool = True
     steps: list[Step] = field(default_factory=list)
+    tokens_in: int = 0
+    tokens_out: int = 0
 
     def to_dict(self) -> dict[str, Any]:
-        """Return a JSON-serialisable view, for the API and the export button."""
-        return asdict(self)
+        """Return a JSON-serialisable view, for the API and the export button.
+
+        Cost is computed here rather than at each return point so every path out of
+        the loop - answer, deadline, error, step cap - reports it.
+        """
+        data = asdict(self)
+        data["cost_usd"] = estimate_cost(self.model, self.tokens_in, self.tokens_out)
+        return data
 
 
 def _ms(started: float) -> int:
     """Return elapsed milliseconds since a monotonic start time."""
     return int((time.monotonic() - started) * 1000)
+
+
+def estimate_cost(model: str, tokens_in: int, tokens_out: int) -> float:
+    """Return the USD cost of a run, or 0.0 for a model with no published price here.
+
+    Args:
+        model: Model id as sent to the API.
+        tokens_in: Total prompt tokens across the run.
+        tokens_out: Total completion tokens across the run.
+
+    Returns:
+        Cost in US dollars, rounded to the nearest hundredth of a cent.
+    """
+    price_in, price_out = PRICES.get(model, (0.0, 0.0))
+    return round((tokens_in * price_in + tokens_out * price_out) / 1_000_000, 6)
+
+
+def _usage_of(response: Any) -> tuple[int, int]:
+    """Pull (input, output) token counts off a response, tolerating their absence.
+
+    A fake client in the tests has no usage block, and a provider may drop it; neither
+    is worth failing a run over, so both report zero.
+    """
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return 0, 0
+    return int(getattr(usage, "input_tokens", 0) or 0), int(getattr(usage, "output_tokens", 0) or 0)
 
 
 def _text_of(response: Any) -> str:
@@ -143,7 +187,10 @@ def run_agent(
             run.steps.append(Step(n, "error", "model", f"{type(exc).__name__}: {exc}"[:500], _ms(started)))
             return run
 
-        run.steps.append(Step(n, "model", model, _text_of(response)[:500], _ms(started)))
+        step_in, step_out = _usage_of(response)
+        run.tokens_in += step_in
+        run.tokens_out += step_out
+        run.steps.append(Step(n, "model", model, _text_of(response)[:500], _ms(started), step_in, step_out))
 
         # Echo every output item back, reasoning items included: GPT-5 class models
         # require their reasoning to be replayed alongside tool outputs.

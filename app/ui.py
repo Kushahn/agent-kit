@@ -67,15 +67,24 @@ function render(run) {
   $('answer').innerHTML = run.answer
     ? '<div class="answer"><strong>Answer</strong><br>' + esc(run.answer) + '</div>'
     : '';
-  $('trail').innerHTML = run.steps.map(function (s) {
+  const turns = run.steps.filter(function (s) { return s.kind === 'model'; }).length;
+  const tokens = (run.tokens_in || 0) + (run.tokens_out || 0);
+  const summary = tokens
+    ? '<div class="k" style="margin:0 0 12px">' + turns + ' model turns &middot; '
+      + tokens.toLocaleString() + ' tokens &middot; $' + (run.cost_usd || 0).toFixed(4)
+      + ' per decision</div>'
+    : '';
+  $('trail').innerHTML = summary + run.steps.map(function (s) {
     const cls = s.kind === 'tool' ? 'tool'
               : s.kind === 'error' ? 'error'
               : s.kind === 'final' ? 'final' : '';
     const ms = s.ms ? ' &middot; ' + s.ms + ' ms' : '';
+    const tok = (s.tokens_in || s.tokens_out)
+              ? ' &middot; ' + (s.tokens_in + s.tokens_out) + ' tok' : '';
     const name = s.name ? ' &middot; ' + esc(s.name) : '';
     return '<div class="step ' + cls + '">'
          + '<div class="k"><span class="n">step ' + s.n + '</span> &middot; '
-         + esc(s.kind) + name + ms + '</div>'
+         + esc(s.kind) + name + ms + tok + '</div>'
          + (s.detail ? '<pre>' + esc(s.detail) + '</pre>' : '')
          + '</div>';
   }).join('');
