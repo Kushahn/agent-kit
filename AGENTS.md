@@ -64,6 +64,8 @@ session logs are the evidence.
 Claude and Codex meter independently. Either can die mid-build; the project must not. This
 is why the contract lives in this file and not in one tool's memory.
 
+**The two agents are not equally scarce on the day.** The organisers issue every participant a one-month ChatGPT & Codex Pro 5x plan at 12:30, which is roughly five times Plus - on the order of hundreds of `gpt-5.6-terra` messages per five-hour window, far more than this build can spend. Claude runs on whatever personal plan you already pay for, and nobody is topping it up. So **Codex is the workhorse and Claude is the rationed specialist**: spend Claude on the case read, the track call, tool signatures, the README and reviews, and let Codex do the volume.
+
 **Claude has two limits and the five-hour one is the trap.** It is a *rolling window that
 opens on your first message of the session*, not at midnight. A five-hour contest against a
 five-hour window means that if you open Claude to "get set up" an hour before the start, it
@@ -93,11 +95,26 @@ On the day:
 
    codex exec -p hackathon review --uncommitted    # Claude's review pass
    ```
-4. **If it is the OpenAI side that dies,** the app itself is what breaks, not the build —
-   `/api/health` will show `api_key_configured` true but every run erroring in the trail.
-   Switch provider with the `MODEL` env var plus a base URL on Vercel and redeploy; the loop
-   takes any OpenAI-compatible client. Pricing in `PRICES` will then read 0.0, which is
-   correct — it is not a number we can stand behind for another provider.
+4. **If it is the OpenAI side that dies,** the app breaks rather than the build, and §8.9
+   rejects a project that does not run — so this is the failure that actually costs the
+   prize. `/api/health` will show `api_key_configured` true while every run errors in the
+   trail. The organisers also issue **$50 of NVIDIA API credit** at 12:30, which is the
+   only second provider you are given.
+
+   **It is not a drop-in swap, and finding that out at hour four is the bad version.**
+   NVIDIA NIM (`https://integrate.api.nvidia.com/v1`) is OpenAI-compatible on
+   *chat completions*; it does not serve the **Responses** API, which is what
+   `agent.py` calls. Setting `OPENAI_BASE_URL` alone will 404 every turn.
+
+   The change is small but it is a change: one `client.chat.completions.create` branch
+   that maps `tools` to the `{"type": "function", "function": {...}}` shape, reads
+   `message.tool_calls` instead of `output`, and appends `{"role": "tool",
+   "tool_call_id": ...}` instead of `function_call_output`. The reasoning-replay rule does
+   not apply — NVIDIA's catalogue is open models (Nemotron, GLM, Kimi, Gemma), not
+   reasoning models. Hand that paragraph to Codex; do not design it live.
+
+   `PRICES` will then report 0.0, which is correct: it is not a number we can stand
+   behind for another provider, and §8.6 lets experts check claimed results.
 5. **Neither agent is allowed to be the only thing that knows something.** Anything decided
    in a chat gets written into `PROGRESS.md` or this file in the same hour.
 
