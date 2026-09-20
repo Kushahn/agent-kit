@@ -28,12 +28,21 @@ class FakeCall:
     type: str = "function_call"
 
 
+class FakeUsage:
+    """Stands in for a Responses API usage block."""
+
+    def __init__(self, input_tokens: int, output_tokens: int) -> None:
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+
+
 class FakeResponse:
     """Stands in for a Responses API result."""
 
-    def __init__(self, output: list[Any], text: str = "") -> None:
+    def __init__(self, output: list[Any], text: str = "", usage: Any = None) -> None:
         self.output = output
         self.output_text = text
+        self.usage = usage
 
 
 class FakeResponses:
@@ -187,6 +196,34 @@ def test_model_failure_is_recorded_not_raised() -> None:
 
     assert run.ok is False
     assert "api is down" in run.steps[0].detail
+
+
+def test_usage_and_cost_accumulate_across_turns() -> None:
+    """Tokens add up over every model turn and become the priced total the trail shows."""
+    client = FakeClient(
+        [
+            FakeResponse([FakeCall(name="echo", arguments='{"value":"x"}')], usage=FakeUsage(1000, 200)),
+            FakeResponse([], text="Done.", usage=FakeUsage(1500, 300)),
+        ]
+    )
+    registry, _ = toy_registry()
+
+    run = run_agent("price this", registry=registry, client=client, model="gpt-5.6")
+
+    assert (run.tokens_in, run.tokens_out) == (2500, 500)
+    assert run.steps[0].tokens_in == 1000, "per-step counts survive into the trail"
+    # 2500 in at $1.25/M plus 500 out at $10.00/M.
+    assert run.to_dict()["cost_usd"] == pytest.approx(0.008125)
+
+
+def test_absent_usage_costs_zero_rather_than_guessing() -> None:
+    """No usage block, or an unpriced model, reports 0.0 - never a fabricated figure."""
+    client = FakeClient([FakeResponse([], text="Done.")])
+    registry, _ = toy_registry()
+
+    run = run_agent("no usage", registry=registry, client=client, model="unpriced-model")
+
+    assert run.to_dict()["cost_usd"] == 0.0
 
 
 if __name__ == "__main__":
