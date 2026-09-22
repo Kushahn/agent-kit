@@ -77,7 +77,7 @@ def _replay() -> dict[str, Any] | None:
     """Return the recorded demo run when no key is set and a recording ships, else None."""
     if _has_key() or not RECORDING.is_file():
         return None
-    payload = json.loads(RECORDING.read_text(encoding="utf-8"))
+    payload = json.loads(RECORDING.read_text(encoding="utf-8-sig"))
     payload["replayed"] = True
     return payload
 
