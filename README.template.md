@@ -45,6 +45,10 @@ deployed URL with no input at all.
 **Fastest path — no account needed:** open <URL> and press **Run the demo case**. The API
 key is held on the server, so this is the demo access for the model API.
 
+**No key at all?** Run it locally anyway: with `OPENAI_API_KEY` unset, the demo button
+replays a recorded real run of the demo case (`app/demo_recording.json`), labelled as a
+replay. Set the key for a live run.
+
 ### System requirements
 
 - Windows, macOS or Linux; Python **3.12+**
@@ -53,17 +57,17 @@ key is held on the server, so this is the demo access for the model API.
 
 ### Dependencies
 
-FastAPI, uvicorn, Pydantic, the OpenAI Python SDK, python-dotenv — pinned in
-`pyproject.toml` and `uv.lock` (`requirements.txt` for pip). pytest for the tests.
+FastAPI, uvicorn (the `standard` extra, which provides `--env-file`), Pydantic, the OpenAI
+Python SDK — declared in `pyproject.toml`, locked in `uv.lock`. pytest for the tests.
 
 ### Environment variables
 
 | Variable | Required | Default | What it does |
 |---|---|---|---|
-| `OPENAI_API_KEY` | yes, for the agent | — | Key for the model API |
+| `OPENAI_API_KEY` | for live runs | — | Key for the model API; unset, the demo replays |
 | `MODEL` | no | `<model>` | Model name |
 | `LLM_PROTOCOL` | no | `responses` | `chat` for a chat-completions provider |
-| `OPENAI_BASE_URL` | no | OpenAI | Another OpenAI-compatible endpoint |
+| `OPENAI_BASE_URL` | no | OpenAI (NVIDIA NIM when `LLM_PROTOCOL=chat`) | Another OpenAI-compatible endpoint |
 
 ### Install and start
 
@@ -81,7 +85,8 @@ uv run uvicorn app.main:app --env-file .env   # or: uvicorn app.main:app --env-f
 2. **You should see:** the agent inspects the data with its tools, flags <N> records with
    stated reasons, and prints a summary. Every model turn and tool call appears in the trail
    below the answer, and exports as JSON.
-3. `GET /api/health` returns `"api_key_configured": true` when the key is set.
+3. `GET /api/health` returns `"api_key_configured": true` when the key is set, and
+   `"demo_recording": true` when a replay ships.
 
 ## 4. How it works
 

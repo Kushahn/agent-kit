@@ -19,7 +19,7 @@ be deleted and replaced. The commit history is public and dated so its origin is
 
 ```bash
 uv sync
-uv run pytest -q                          # 7 tests, no API key needed
+uv run pytest -q                          # 19 tests, no API key needed
 cp .env.example .env                      # add OPENAI_API_KEY
 uv run uvicorn app.main:app --reload --env-file .env   # http://127.0.0.1:8000
 ```

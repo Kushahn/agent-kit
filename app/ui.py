@@ -100,9 +100,18 @@ async function call(url, body) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body || {})
     });
-    const data = await r.json();
+    // A platform timeout (504) or crash returns an HTML page, not JSON: say what happened.
+    const data = await r.json().catch(function () { return null; });
+    if (!data) {
+      $('status').textContent = 'The server returned HTTP ' + r.status
+        + (r.status === 504 ? ' - the run took longer than the platform allows. Try again.' : '.');
+      return;
+    }
     if (!r.ok) { $('status').textContent = data.detail || 'Request failed.'; return; }
-    $('status').textContent = data.ok ? '' : 'The run did not complete cleanly - see the trail.';
+    $('status').textContent = data.replayed
+      ? 'Replay of a recorded real run: no API key is set on this server. '
+        + 'Set OPENAI_API_KEY for a live run.'
+      : data.ok ? '' : 'The run did not complete cleanly - see the trail.';
     render(data);
   } catch (e) {
     $('status').textContent = 'Network error: ' + e.message;

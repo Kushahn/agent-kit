@@ -17,6 +17,7 @@ and a visible chain of tool calls is the evidence. An AI judge reads it first.
 | `app/agent.py` | The loop. Model turns, tool dispatch, trail capture. Rarely changes. |
 | `app/tools.py` | **Gut this on the day.** Tools are the case-specific part. |
 | `app/demo.py` | **Gut this on the day.** The bundled case the demo button runs. |
+| `app/demo_recording.json` | **Create on the day**, after the last functional change: a live demo run saved with the page's export button. With no key set, the demo button replays it, labelled as a replay. |
 | `app/main.py` | FastAPI routes. Rarely changes. |
 | `app/ui.py` | The page, inlined as a string constant. |
 | `vercel.json` | Function config only. **Never add a catch-all rewrite** — see Deploy. |
@@ -188,12 +189,13 @@ Section numbers are from the Regulations published 22 September 2026.
    fixes are accepted. Before 18:00, clone into a fresh folder and follow it word for word.
 3. **Deploy at hour 0, not hour 5.** §5.6.6: key features must be testable without any
    participant's personal account, so the live URL (our key held server-side) is the demo
-   access. It must stay up through expert review, 24-28 September.
+   access. It must stay up through expert review and Demo Day, 24-29 September.
 4. **Disclose pre-existing code.** §5.4.4. This scaffold is a public template that predates
    the event. Templates are allowed only as plumbing (§5.4.4.2): the Task's main
    functionality is built during the contest. Say so in the README and the first commit.
 5. **All work in the organiser's repo.** §5.4.9, §5.4.11. What it holds at 18:00 is the
-   final version (§5.4.13) — push before then.
+   final version (§5.4.13) — push before then, and deploy no new code after it: every
+   stage judges the 18:00 version (§5.4.14).
 6. **Feature freeze at hour 3.** The rubric rewards a small working thing, explained well.
 7. **Technical criteria come from the chosen Task's ТЗ** (§5.5), not a fixed table. Read its
    scoring table at 13:00 and build to it. Unless it scores code quality, ship ugly, ship
