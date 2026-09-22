@@ -29,6 +29,21 @@ and a visible chain of tool calls is the evidence. An AI judge reads it first.
 **Claude defines interfaces. Codex fills bodies. Claude reviews.**
 Never point both at the same file at the same time.
 
+**One conductor per person, memory in files.** You talk to Claude Code only; Claude hands
+Codex a self-contained task with `codex exec` (below), reads the result and reviews the
+diff before anything is committed. Do not also run a separate Codex chat on the same files:
+two agents with two private memories is exactly how the work drifts apart. What both must
+know lives in files they both read — this contract, `CASE.md` (the case, the one sentence,
+the Not Doing list) and `PROGRESS.md` (what is done and every decision, one line each).
+
+- A Codex task starts cold. Its prompt names the file it owns, the signature, and how to
+  check it is done ("tests/test_case.py passes"). Never "as we discussed".
+- Fix-ups to the task Codex just did continue its session instead of starting over:
+  `codex exec -p hackathon --approve-for-me resume --last "<the fix>"`. A new task gets a new session.
+- **Handoff when Claude's window runs out:** Claude's last act is a `PROGRESS.md` line saying
+  what is next. Then Codex drives, starting with "Read AGENTS.md, CASE.md and PROGRESS.md
+  first" — it picks up from the files, not from Claude's chat.
+
 - **Claude** — reads the case, picks the track, writes tool *signatures and descriptions*,
   wires modules, writes the README and the pitch, keeps `PROGRESS.md` current, reviews.
 - **Codex** — implements one self-contained file per task against a fixed signature.
@@ -203,6 +218,14 @@ Section numbers are from the Regulations published 22 September 2026.
 7. **Technical criteria come from the chosen Task's ТЗ** (§5.5), not a fixed table. Read its
    scoring table at 13:00 and build to it. Unless it scores code quality, ship ugly, ship
    working.
+8. **The organisers' cybersecurity rules bind agents too.** No key, token or password in
+   code, commits, README, slides or chat — keys live in `.env` and Vercel only; a leaked
+   key is reported to the organisers at once, then revoked. Use only data the case provides
+   or the organisers allow; keep case data marked confidential out of prompts. No network
+   scans, load or DoS tests, and no working around limits — including against our own
+   deployed URL on the shared network.
+9. **The final README is in Russian** (the organisers' README prompt asks for it) and
+   includes data and integrations and known limitations — see `README.template.md`.
 
 ## Adding a tool
 

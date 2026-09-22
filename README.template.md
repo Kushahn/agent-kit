@@ -15,6 +15,11 @@ Before 18:00, clone the repo into a fresh folder and follow section 3 word for w
 
 Technical scoring comes from the chosen Task's ТЗ (§5.5), not a fixed table. At 13:00,
 copy its criteria here and make sure each one has a section a skimmer can find.
+
+WRITE THE FINAL README IN RUSSIAN: the organisers' README prompt asks for Russian. If the
+case document carries its own README prompt, follow that. Their list also asks for data
+and integrations (section 5a) and known limitations (section 6a). Claim only what the repo
+confirms. No keys, tokens or passwords anywhere in it.
 -->
 
 # <PROJECT NAME>
@@ -113,6 +118,11 @@ Name the actual operator — an agency, a department, a team — and the decisio
 or speeds up. What it would plug into. No business model required by the rubric; just make
 the use concrete.
 
+## 5a. Data and integrations
+
+Every data source (provided by the case, public, or synthetic — say which), and every
+external API or service the app calls, with what it is used for.
+
 ## 6. Where it goes next
 
 **Worth 20 points at Demo Day (§5.7.2), and check whether the Task's ТЗ scores it too.**
@@ -122,6 +132,13 @@ Write it properly.
 - **At scale:** what changes when it handles 10,000 records instead of 8
 - **Adjacent uses:** other tracks or organisations the same machinery serves
 - **What it would take:** the honest list of what is missing for production
+
+## 6a. Known limitations
+
+What this version does not do, and where it can be wrong. Honest and specific: a judge who
+finds a limitation you did not list trusts the rest less.
+
+- …
 
 ## 7. Disclosures
 
