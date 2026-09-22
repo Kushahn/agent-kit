@@ -100,8 +100,8 @@ if ((Test-Path $profilePath) -and ((Get-Content $profilePath -Raw).TrimEnd() -eq
 
 # --- 2. Toolchain ----------------------------------------------------------------------
 foreach ($t in @(
-    @{ n = 'codex';  why = 'mandatory per the organisers (Regulations 8.6)' },
-    @{ n = 'git';    why = 'hourly commits are the disqualification rule (6.6)' },
+    @{ n = 'codex';  why = 'the abundant agent on the day (Pro 5x issued at 12:30)' },
+    @{ n = 'git';    why = 'hourly results are a disqualification rule (5.4.8)' },
     @{ n = 'uv';     why = 'installs and runs the project' }
 )) {
     if (Test-Cmd $t.n) { Ok "$($t.n) found" } else { Fail "$($t.n) MISSING - $($t.why)" }
