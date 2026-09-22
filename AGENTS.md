@@ -77,14 +77,17 @@ Pre-flight, the morning of:
 | Check | How | What you want |
 |---|---|---|
 | Weekly cap headroom | `/usage` | room for a whole contest; it is separate from the 5h window |
-| Session window unburnt | open nothing | first Claude message = official start |
+| Session window primed | one tiny message at 09:00 sharp, then nothing until 13:00 | window A 09:00-14:00 nearly unspent; window B opens at the first message after 14:00 |
 | Paid escape hatch armed | `/usage`, enable usage credits | past the cap you keep working at API rates |
 | One-shot rescue held back | `/limit-reset` | clears the 5h window, once a week — do not spend it on prep |
 
 On the day:
 
-1. **Do not open Claude before the start.** Cloning, `bootstrap.ps1`, reading the rules and
-   the venue Wi-Fi all happen in a terminal or in Codex. Hour zero opens the window.
+1. **Prime at 09:00, then leave Claude alone until 13:00.** One tiny message at 09:00 opens
+   window A (09:00-14:00) almost unspent, so its whole budget goes on the case read and the
+   idea gate in 13:00-14:00. The first message after 14:00 opens window B (14:00-19:00),
+   which covers the finish. Cloning, `bootstrap.ps1`, reading the rules and the venue Wi-Fi
+   happen in a terminal or in Codex. If window A runs dry before 14:00, Codex drives.
 2. **Commit Codex output from hour one, not hour four.** `.codex/<name>.md` records who did
    what (§4.1), and if the Task's ТЗ requires a tool, it is the evidence. A person who saves
    all their Codex use for the end has nothing to show if the key or the quota dies first.
