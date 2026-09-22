@@ -1,9 +1,12 @@
 """The bundled demo case.
 
 Judges review 24-28 September without you present and with no data of their own.
-If the app needs an upload before it shows anything, the 25-point "functionality"
-criterion is lost. So one button must run a convincing end-to-end case from data
-that ships inside the repo.
+If the app needs an upload before it shows anything, they cannot check the main
+scenario (Regulations §5.4.15). So one button must run a convincing end-to-end case
+from data that ships inside the repo.
+
+After the last functional change, run the demo live and save the page's export as
+``app/demo_recording.json``: with no key set, the demo button replays it (see main.py).
 
 Data is inlined rather than read from a CSV: serverless working directories are not
 where you expect, and a missing-file error on judging day is an unforced loss.

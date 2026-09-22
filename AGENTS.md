@@ -17,6 +17,7 @@ and a visible chain of tool calls is the evidence. An AI judge reads it first.
 | `app/agent.py` | The loop. Model turns, tool dispatch, trail capture. Rarely changes. |
 | `app/tools.py` | **Gut this on the day.** Tools are the case-specific part. |
 | `app/demo.py` | **Gut this on the day.** The bundled case the demo button runs. |
+| `app/demo_recording.json` | **Create on the day**, after the last functional change: a live demo run saved with the page's export button. With no key set, the demo button replays it, labelled as a replay. |
 | `app/main.py` | FastAPI routes. Rarely changes. |
 | `app/ui.py` | The page, inlined as a string constant. |
 | `vercel.json` | Function config only. **Never add a catch-all rewrite** — see Deploy. |
@@ -27,6 +28,21 @@ and a visible chain of tool calls is the evidence. An AI judge reads it first.
 
 **Claude defines interfaces. Codex fills bodies. Claude reviews.**
 Never point both at the same file at the same time.
+
+**One conductor per person, memory in files.** You talk to Claude Code only; Claude hands
+Codex a self-contained task with `codex exec` (below), reads the result and reviews the
+diff before anything is committed. Do not also run a separate Codex chat on the same files:
+two agents with two private memories is exactly how the work drifts apart. What both must
+know lives in files they both read — this contract, `CASE.md` (the case, the one sentence,
+the Not Doing list) and `PROGRESS.md` (what is done and every decision, one line each).
+
+- A Codex task starts cold. Its prompt names the file it owns, the signature, and how to
+  check it is done ("tests/test_case.py passes"). Never "as we discussed".
+- Fix-ups to the task Codex just did continue its session instead of starting over:
+  `codex exec -p hackathon --approve-for-me resume --last "<the fix>"`. A new task gets a new session.
+- **Handoff when Claude's window runs out:** Claude's last act is a `PROGRESS.md` line saying
+  what is next. Then Codex drives, starting with "Read AGENTS.md, CASE.md and PROGRESS.md
+  first" — it picks up from the files, not from Claude's chat.
 
 - **Claude** — reads the case, picks the track, writes tool *signatures and descriptions*,
   wires modules, writes the README and the pitch, keeps `PROGRESS.md` current, reviews.
@@ -56,8 +72,8 @@ falls back to a model-free profile if Codex rejects the pinned model.
 Measured: **45s vs 2m36s** against the default `ultra` profile on a real coding task. Use
 `-c model_reasoning_effort="ultra"` for a single genuinely hard problem, not as the default.
 
-Keep `.codex/` committed. Codex use is mandatory (§8.6 lets experts verify it) and the
-session logs are the evidence.
+Keep `.codex/` committed. Codex is not required by the rules (§5.4.12) unless the Task's ТЗ
+says so, but the session logs are part of the development history experts may check (§4.1).
 
 ## When an agent runs out — the failover drill
 
@@ -76,17 +92,20 @@ Pre-flight, the morning of:
 | Check | How | What you want |
 |---|---|---|
 | Weekly cap headroom | `/usage` | room for a whole contest; it is separate from the 5h window |
-| Session window unburnt | open nothing | first Claude message = official start |
+| Session window primed | one tiny message at 09:00 sharp, then nothing until 13:00 | window A 09:00-14:00 nearly unspent; window B opens at the first message after 14:00 |
 | Paid escape hatch armed | `/usage`, enable usage credits | past the cap you keep working at API rates |
 | One-shot rescue held back | `/limit-reset` | clears the 5h window, once a week — do not spend it on prep |
 
 On the day:
 
-1. **Do not open Claude before the start.** Cloning, `bootstrap.ps1`, reading the rules and
-   the venue Wi-Fi all happen in a terminal or in Codex. Hour zero opens the window.
-2. **Bank the Codex evidence in hour one, not hour four.** §8.6 lets experts verify that the
-   mandatory tool was used, and `.codex/<name>.md` is that evidence. A person who saves all
-   their Codex use for the end has no evidence at all if the key or the quota dies first.
+1. **Prime at 09:00, then leave Claude alone until 13:00.** One tiny message at 09:00 opens
+   window A (09:00-14:00) almost unspent, so its whole budget goes on the case read and the
+   idea gate in 13:00-14:00. The first message after 14:00 opens window B (14:00-19:00),
+   which covers the finish. Cloning, `bootstrap.ps1`, reading the rules and the venue Wi-Fi
+   happen in a terminal or in Codex. If window A runs dry before 14:00, Codex drives.
+2. **Commit Codex output from hour one, not hour four.** `.codex/<name>.md` records who did
+   what (§4.1), and if the Task's ТЗ requires a tool, it is the evidence. A person who saves
+   all their Codex use for the end has nothing to show if the key or the quota dies first.
 3. **Codex is a replacement driver, not a helper.** If Claude stops, nothing is blocked:
 
    ```bash
@@ -95,8 +114,8 @@ On the day:
 
    codex exec -p hackathon review --uncommitted    # Claude's review pass
    ```
-4. **If it is the OpenAI side that dies,** the app breaks rather than the build, and §8.9
-   rejects a project that does not run — so this is the failure that actually costs the
+4. **If it is the OpenAI side that dies,** the app breaks rather than the build, and §5.4.16
+   drops a project that does not run — so this is the failure that actually costs the
    prize. `/api/health` will show `api_key_configured` true while every run errors in the
    trail. The organisers also issue **$50 of NVIDIA API credit** at 12:30, which is the
    only second provider you are given.
@@ -114,14 +133,14 @@ On the day:
    reasoning models. Hand that paragraph to Codex; do not design it live.
 
    `PRICES` will then report 0.0, which is correct: it is not a number we can stand
-   behind for another provider, and §8.6 lets experts check claimed results.
+   behind for another provider, and §4.1 lets experts check claimed results.
 5. **Neither agent is allowed to be the only thing that knows something.** Anything decided
    in a chat gets written into `PROGRESS.md` or this file in the same hour.
 
 ## Team of three — lanes
 
-§6.6 requires an hourly result from **each participant**, and §6.5, §8.6 and §9.3 let the
-organisers check each person's contribution. So the work splits into three lanes, each
+§5.4.8 requires an hourly result from the team, and §4.1, §4.6 and §5.4.7 let the
+organisers and the jury check each person's contribution. So the work splits into three lanes, each
 owning whole files. One owner per file is what lets three people push to one branch
 without merge conflicts.
 
@@ -142,8 +161,8 @@ without merge conflicts.
 4. **Pull before you push:** `git pull --rebase origin HEAD`. A rebase conflict means
    someone edited a file outside their lane — `git rebase --abort` and call its owner.
 5. **Commit under your own name.** Authorship is how contribution gets verified.
-6. **Everyone uses Codex in their own lane.** It is mandatory, and each person's
-   `.codex/<name>.md` is their evidence. A teammate on Claude follows this same file.
+6. **Everyone uses Codex in their own lane.** It is the abundant agent on the day, and each
+   person's `.codex/<name>.md` is their contribution record. A teammate on Claude follows this same file.
 
 ## Deploy — read before touching `vercel.json`
 
@@ -177,16 +196,36 @@ curl -s -X POST "$URL/api/demo" | head -c 200               # the judge's path
 
 ## Non-negotiable rules on the day
 
-1. **Every person commits at least once an hour.** Regulations §6.6 counts each
-   participant: one idle teammate for one hour is grounds for disqualifying the team.
-   Append your own line to `PROGRESS.md` each time.
-2. **Deploy at hour 0, not hour 5.** §8.9 rejects undeployed projects before judging.
-   An empty live URL early beats a perfect local app.
-3. **Disclose pre-existing code.** §6.4. This scaffold is public and predates the event —
-   say so in the README and in the first commit message.
-4. **All work in the organiser's repo.** §6.8.
-5. **Feature freeze at hour 3.** The rubric rewards a small working thing, explained well.
-6. Production code quality is **explicitly not judged** (§7.4). Ship ugly, ship working.
+Section numbers are from the Regulations published 22 September 2026.
+
+1. **Something committed every hour, by everyone.** §5.4.8: a team with no confirmed
+   result for any hour can be disqualified (§5.9.2). Contribution is checked per person
+   (§4.1, §4.6), so each person commits under their own name and appends their own
+   `PROGRESS.md` line.
+2. **The README must run on a stranger's machine.** §5.4.15-5.4.16: experts install and
+   launch the project from the README alone; if it does not start, the team is out and no
+   fixes are accepted. Before 18:00, clone into a fresh folder and follow it word for word.
+3. **Deploy at hour 0, not hour 5.** §5.6.6: key features must be testable without any
+   participant's personal account, so the live URL (our key held server-side) is the demo
+   access. It must stay up through expert review and Demo Day, 24-29 September.
+4. **Disclose pre-existing code.** §5.4.4. This scaffold is a public template that predates
+   the event. Templates are allowed only as plumbing (§5.4.4.2): the Task's main
+   functionality is built during the contest. Say so in the README and the first commit.
+5. **All work in the organiser's repo.** §5.4.9, §5.4.11. What it holds at 18:00 is the
+   final version (§5.4.13) — push before then, and deploy no new code after it: every
+   stage judges the 18:00 version (§5.4.14).
+6. **Feature freeze at hour 3.** The rubric rewards a small working thing, explained well.
+7. **Technical criteria come from the chosen Task's ТЗ** (§5.5), not a fixed table. Read its
+   scoring table at 13:00 and build to it. Unless it scores code quality, ship ugly, ship
+   working.
+8. **The organisers' cybersecurity rules bind agents too.** No key, token or password in
+   code, commits, README, slides or chat — keys live in `.env` and Vercel only; a leaked
+   key is reported to the organisers at once, then revoked. Use only data the case provides
+   or the organisers allow; keep case data marked confidential out of prompts. No network
+   scans, load or DoS tests, and no working around limits — including against our own
+   deployed URL on the shared network.
+9. **The final README is in Russian** (the organisers' README prompt asks for it) and
+   includes data and integrations and known limitations — see `README.template.md`.
 
 ## Adding a tool
 
@@ -251,7 +290,7 @@ most concrete answer there is to "could this scale". It also pre-empts the obvio
 question about running costs.
 
 An unpriced model reports `0.0` rather than a guess. If you switch models on the day, either
-add the two real numbers to `PRICES` or leave it at zero — never ship a plausible fake, §8.6
+add the two real numbers to `PRICES` or leave it at zero — never ship a plausible fake, §4.1
 lets experts check claimed results.
 
 ## Real data: data.egov.kz
@@ -270,9 +309,9 @@ case may not ship its own. Verified 10 Sept:
 - **Check the update date and clean the text.** The sample pulled on 10 Sept was from 2016,
   and Kazakh letters can arrive mis-encoded (`ДОСТЫЌ` for `ДОСТЫҚ`).
 - **Label planted records.** Real data has no known answers, so the demo still needs a few
-  planted cases — mark them (`"synthetic": true`) and say so in the README. §8.6 lets
+  planted cases — mark them (`"synthetic": true`) and say so in the README. §4.1 lets
   experts check the reliability of claimed results.
-- **Disclose it** in README §7: dataset name, URL, date fetched (§6.4).
+- **Disclose it** in README §7: dataset name, URL, date fetched (§5.4.4).
 
 ## Commands
 
