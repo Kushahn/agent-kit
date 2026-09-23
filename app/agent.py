@@ -1,8 +1,8 @@
 """Minimal tool-calling agent loop that records a full audit trail.
 
-The trail is the product, not a debug aid: HackAlem AI judges an *agentic* solution,
-and a visible chain of model turns and tool calls is the clearest evidence that the
-thing actually reasons. It is also what an AI judge reads first.
+The trail is the product, not a debug aid: a hackathon that judges *agentic* solutions
+wants evidence that the thing actually reasons, and a visible chain of model turns and
+tool calls is the clearest there is. It is also what an AI judge reads first.
 
 The OpenAI client is injected so the loop is testable with no API key and no network.
 """

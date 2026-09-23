@@ -1,9 +1,9 @@
 # Progress log
 
-Regulations §5.4.8 requires a confirmed result for **every hour** of the contest; a missing
-hour is grounds for disqualifying the team (§5.9.2). Contribution is checked per person
-(§4.1, §4.6), so each person appends their own line each hour; `.gitattributes` merges
-simultaneous appends instead of conflicting.
+One line per person per checkpoint (hourly unless AGENTS.md "This event" says otherwise).
+Some events disqualify a team for a checkpoint with no result, and many check contribution
+per person, so each person appends their own line; `.gitattributes` merges simultaneous
+appends instead of conflicting. Every decision made in a chat goes here too.
 
 | Time | Who | What changed | Commit |
 |---|---|---|---|

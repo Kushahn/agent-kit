@@ -1,9 +1,9 @@
 """The bundled demo case.
 
-Judges review 24-28 September without you present and with no data of their own.
-If the app needs an upload before it shows anything, they cannot check the main
-scenario (Regulations §5.4.15). So one button must run a convincing end-to-end case
-from data that ships inside the repo.
+Judges often review for days after the event, without you present and with no data of
+their own. If the app needs an upload before it shows anything, they cannot check the
+main scenario. So one button must run a convincing end-to-end case from data that ships
+inside the repo.
 
 After the last functional change, run the demo live and save the page's export as
 ``app/demo_recording.json``: with no key set, the demo button replays it (see main.py).

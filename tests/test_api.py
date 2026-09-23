@@ -1,6 +1,6 @@
-"""HTTP-level checks for what an expert without an API key sees.
+"""HTTP-level checks for what a judge without an API key sees.
 
-Regulations §5.4.16 drops a project that will not run from its README, and an expert may
+Hackathons commonly drop a project that will not run from its README, and a judge may
 have no key. These pin the two no-key outcomes: a labelled replay, or a readable 503.
 """
 
