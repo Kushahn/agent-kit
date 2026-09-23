@@ -1,30 +1,29 @@
 <!--
 FILL THIS IN ON THE DAY. Copy over README.md and delete these comments.
 
-Section numbers are from the Regulations published 22 September 2026. An AI judge may read
-this before any human does (§4.2-4.3). Write plainly, claim only what the repo can back,
-and put the numbers where a skimmer will find them.
+"This event" below means the table at the top of AGENTS.md. An AI judge may read this
+before any human does. Write plainly, claim only what the repo can back, and put the
+numbers where a skimmer will find them.
 
-HARD GATE (§5.4.15-5.4.16): experts install and launch the project from this README alone.
-If it does not start, the team is out and no fixes are accepted. It must contain all of:
+TREAT IT AS A HARD GATE: judges often install and launch the project from the README
+alone, and a project that does not start may be out with no fixes accepted. It covers:
   purpose ................ sections 1-2     architecture ........... section 4
   technologies ........... section 4       install / start-up ..... section 3
   dependencies ........... section 3       environment variables .. section 3
   system requirements .... section 3       checking the main scenario ... section 3
-Before 18:00, clone the repo into a fresh folder and follow section 3 word for word.
+Before the code freeze, clone the repo into a fresh folder and follow section 3 word for word.
 
-Technical scoring comes from the chosen Task's ТЗ (§5.5), not a fixed table. At 13:00,
-copy its criteria here and make sure each one has a section a skimmer can find.
+At kickoff, copy the rubric's criteria here and make sure each one has a section a skimmer
+can find. If the organisers publish their own README list or prompt, follow it and add
+whatever it asks for that is missing below.
 
-WRITE THE FINAL README IN RUSSIAN: the organisers' README prompt asks for Russian. If the
-case document carries its own README prompt, follow that. Their list also asks for data
-and integrations (section 5a) and known limitations (section 6a). Claim only what the repo
+WRITE IT IN THE LANGUAGE THE ORGANISERS ASK FOR (This event). Claim only what the repo
 confirms. No keys, tokens or passwords anywhere in it.
 -->
 
 # <PROJECT NAME>
 
-**Task:** <the one Task this is entered for>
+**Case / track:** <the one case or track this is entered for>
 **Team:** <name> — <members>
 **Live demo:** <URL>  ·  **Health check:** <URL>/api/health  ·  no account or API key needed
 
@@ -32,8 +31,8 @@ confirms. No keys, tokens or passwords anywhere in it.
 
 ## 1. The problem
 
-Who has this problem, how often, and what it costs them today. Be specific to the Task —
-use the ТЗ's own words for the required result. Two short paragraphs.
+Who has this problem, how often, and what it costs them today. Be specific to the case —
+use the case document's own words for the required result. Two short paragraphs.
 
 ## 2. What we built
 
@@ -125,8 +124,8 @@ external API or service the app calls, with what it is used for.
 
 ## 6. Where it goes next
 
-**Worth 20 points at Demo Day (§5.7.2), and check whether the Task's ТЗ scores it too.**
-Write it properly.
+**Most rubrics score growth or scaling potential, often heavily — check its weight in This
+event.** Write it properly.
 
 - **Next month:** …
 - **At scale:** what changes when it handles 10,000 records instead of 8
@@ -142,14 +141,14 @@ finds a limitation you did not list trusts the rest less.
 
 ## 7. Disclosures
 
-Required by Regulations §5.4.4.
+Most events require these; match the organisers' wording if they give one (This event).
 
 - **Pre-existing code:** built on `agent-kit`, our own public template created before the
-  hackathon (https://github.com/Kushahn/agent-kit, MIT, public since 6 September — commit
-  history predates 23 September and is externally timestamped). It contains only plumbing —
-  the agent loop, FastAPI wiring, the page, and deploy config — which §5.4.4.2 allows. The
-  main functionality for the Task (tools, prompts, data handling, UI copy) was written
-  during the contest, 13:00-18:00.
+  hackathon (https://github.com/Kushahn/agent-kit, MIT, public since 6 September 2026 — its
+  commit history predates <event start date> and is externally timestamped). It contains
+  only plumbing — the agent loop, FastAPI wiring, the page, and deploy config. The main
+  functionality for the case (tools, prompts, data handling, UI copy) was written during
+  the contest, <build window>.
 - **Libraries:** FastAPI, Pydantic, the OpenAI Python SDK, uvicorn.
 - **Models:** OpenAI <model> via the Responses API.
 - **AI development tools:** Codex and Claude Code. Codex session logs are
@@ -162,5 +161,5 @@ Required by Regulations §5.4.4.
 |---|---|---|
 | … | captain | … |
 
-*(§4.1 and §4.6 let the experts and the jury verify each participant's actual contribution — keep this honest
-and make sure the git history matches it.)*
+*(Judges may verify each participant's actual contribution — keep this honest and make sure
+the git history matches it.)*

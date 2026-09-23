@@ -30,8 +30,8 @@ MODEL = os.environ.get("MODEL", DEFAULT_MODEL)
 # of code, no edit to the loop. See AGENTS.md, "If it is the OpenAI side that dies".
 LLM_PROTOCOL = os.environ.get("LLM_PROTOCOL", "responses").lower()
 # A real run of the demo case, saved from the page's export button. Served, clearly labelled,
-# when no key is set: an expert who runs the repo without an API key still sees the main
-# scenario (Regulations §5.4.16, §5.6.6). Located by this file, not the working directory.
+# when no key is set: a judge who runs the repo without an API key still sees the main
+# scenario. Located by this file, not the working directory.
 RECORDING = Path(__file__).with_name("demo_recording.json")
 # The value .env.example ships with. A copied-but-unedited .env must count as "no key".
 PLACEHOLDER_KEY = "sk-..."

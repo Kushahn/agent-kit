@@ -1,9 +1,9 @@
 """A Responses-shaped adapter over the chat.completions API.
 
-The organisers issue $50 of NVIDIA credit alongside the OpenAI credit, and NVIDIA NIM
-(``https://integrate.api.nvidia.com/v1``) speaks chat.completions - it does not serve the
-Responses API that ``app.agent`` calls. Pointing ``OPENAI_BASE_URL`` at it would 404 every
-turn, and a project that does not run is dropped (Regulations §5.4.16).
+The second provider a hackathon hands out credit for usually speaks chat.completions only.
+NVIDIA NIM (``https://integrate.api.nvidia.com/v1``) is the common case - it does not serve
+the Responses API that ``app.agent`` calls. Pointing ``OPENAI_BASE_URL`` at it would 404
+every turn, and a project that does not run is usually dropped without a second look.
 
 Rather than branch the loop, this presents the small slice of the Responses surface that
 ``run_agent`` actually touches: ``client.responses.create(...)`` returning an object with
